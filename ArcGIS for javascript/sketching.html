@@ -29,17 +29,7 @@
         "esri/Map",
         "esri/layers/GraphicsLayer",
         "esri/views/MapView",
-
-        "esri/widgets/BasemapToggle",
-        "esri/widgets/BasemapGallery",
-      ], (
-        Sketch,
-        Map,
-        GraphicsLayer,
-        MapView,
-        BasemapToggle,
-        BasemapGallery
-      ) => {
+      ], (Sketch, Map, GraphicsLayer, MapView) => {
         const graphicsLayer = new GraphicsLayer();
 
         const map = new Map({
@@ -65,23 +55,6 @@
 
           view.ui.add(sketch, "top-right");
         });
-        const basemapToggle = new BasemapToggle({
-          view: view,
-          nextBasemap: "arcgis-imagery",
-        });
-
-        view.ui.add(basemapToggle, "bottom-right");
-
-        const basemapGallery = new BasemapGallery({
-          view: view,
-          source: {
-            query: {
-              title: '"World Basemaps for Developers" AND owner:esri',
-            },
-          },
-        });
-
-        view.ui.add(basemapGallery, "top-right"); // Add to the view
       });
     </script>
   </head>

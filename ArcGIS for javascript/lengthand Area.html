@@ -1,0 +1,270 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>Get length and area</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #measurements {
+        padding: 4px 8px;
+        font-size: 16px;
+        bottom: 15px;
+        left: 50%;
+        margin-right: -50%;
+        transform: translate(-50%, -50%);
+      }
+    </style>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.21/esri/themes/light/main.css"
+    />
+    <script src="https://js.arcgis.com/4.21/"></script>
+    <script>
+      require([
+        "esri/config",
+        "esri/Map",
+        "esri/views/SceneView",
+
+        "esri/widgets/ScaleBar",
+        "esri/widgets/Sketch",
+        "esri/Graphic",
+        "esri/layers/GraphicsLayer",
+        "esri/geometry/geometryEngine",
+
+        "esri/tasks/Locator",
+      ], (
+        esriConfig,
+        Map,
+        SceneView,
+
+        ScaleBar,
+        Sketch,
+        Graphic,
+        GraphicsLayer,
+        geometryEngine,
+
+        Locator
+      ) => {
+        esriConfig.apiKey =
+          "AAPK98c50a3510cc4cb9a07dc3116113843cqZssDSqHkgmBfOp_v5GIAETd4ggp7oleJJQPSyr9NmmTf-2GSs7swp9zS6T42ny7";
+
+        const locatorTask = new Locator({
+          url: "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer",
+        });
+
+        const map = new Map({
+          basemap: "arcgis-topographic", // Basemap layer service
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+         camera:{
+           x:76.9558,
+           y:11.0168,
+           z:2000
+         },
+         tilt:13,
+         
+        });
+
+        const scalebar = new ScaleBar({
+          view: view,
+          unit: "metric",
+        });
+
+        view.ui.add(scalebar, "bottom-right");
+
+        const graphicsLayer = new GraphicsLayer();
+        map.add(graphicsLayer);
+
+        const sketch = new Sketch({
+          layer: graphicsLayer,
+          view: view,
+          availableCreateTools: ["polyline", "polygon", "rectangle"],
+          creationMode: "update",
+          updateOnGraphicClick: true,
+          visibleElements: {
+            createTools: {
+              point: false,
+              circle: false,
+            },
+            selectionTools: {
+              "lasso-selection": false,
+              "rectangle-selection": false,
+            },
+            settingsMenu: false,
+            undoRedoMenu: false,
+          },
+        });
+
+        view.ui.add(sketch, "top-right");
+
+        const measurements = document.getElementById("measurements");
+        view.ui.add(measurements, "manual");
+
+        const polygon = {
+          type: "polygon",
+          spatialReference: {
+            wkid: 3857,
+          },
+          rings: [
+            [
+              [-4508069.082189632, 3599936.936171892],
+              [-4508069.082189632, 5478453.343307884],
+              [-2629552.6750536393, 5478453.343307884],
+              [-2629552.6750536393, 3599936.936171892],
+              [-4508069.082189632, 3599936.936171892],
+            ],
+          ],
+        };
+
+        const simplePolygonSymbol = {
+          type: "simple-fill",
+          outline: {
+            color: [200, 0, 0],
+            width: 2,
+          },
+        };
+
+        const polygonGraphic = new Graphic({
+          geometry: polygon,
+          symbol: simplePolygonSymbol,
+        });
+
+        graphicsLayer.add(polygonGraphic);
+
+        view.when(() => {
+          sketch.update(polygonGraphic);
+          getArea(polygonGraphic.geometry);
+        });
+
+        view.popup.autoOpenEnabled = false;
+        view.on("click", (e) => {
+          // Get the coordinates of the click on the view
+          
+          const lat = Math.round(e.mapPoint.latitude * 1000) / 1000;
+          const lon = Math.round(e.mapPoint.longitude * 1000) / 1000;
+
+
+        
+          view.popup.open({
+            // Set the popup's title to the coordinates of the location
+            title: "Reverse geocode: [" + lon + ", " + lat + "]",
+            location: e.mapPoint, // Set the location of the popup to the clicked location
+          });
+
+          const params = {
+            location: e.mapPoint,
+          };
+
+
+          // Display the popup
+          // Execute a reverse geocode using the clicked location
+          locatorTask
+            .locationToAddress(params)
+            .then((response) => {
+              // If an address is successfully found, show it in the popup's content
+              view.popup.content = response.address;
+            })
+            .catch(() => {
+              // If the promise fails and no result is found, show a generic message
+              view.popup.content = "No address was found for this location";
+            });
+        });
+
+
+        sketch.on("update", (e) => {
+
+
+       
+
+          const geometry = e.graphics[0].geometry;
+
+          if (e.state === "start") {
+
+            
+            switchType(geometry);
+          }
+
+          if (e.state === "complete") {
+            
+          }
+
+          if (
+            e.toolEventInfo &&
+            (e.toolEventInfo.type === "scale-stop" ||
+              e.toolEventInfo.type === "reshape-stop" ||
+              e.toolEventInfo.type === "move-stop")
+          ) {
+            switchType(geometry);
+          }
+        });
+
+        function getArea(polygon) {
+          const geodesicArea = geometryEngine.geodesicArea(
+            polygon,
+            "square-kilometers"
+          );
+          const planarArea = geometryEngine.planarArea(
+            polygon,
+            "square-kilometers"
+          );
+
+          measurements.innerHTML =
+            "<b>Geodesic area</b>:  " +
+            geodesicArea.toFixed(2) +
+            " km\xB2" +
+            " |   <b>Planar area</b>: " +
+            planarArea.toFixed(2) +   
+            "  km\xB2";
+        }
+
+        function getLength(line) {
+          const geodesicLength = geometryEngine.geodesicLength(
+            line,
+            "kilometers"
+          );
+          const planarLength = geometryEngine.planarLength(line, "kilometers");
+
+          measurements.innerHTML =
+            "<b>Geodesic length</b>:  " +
+            geodesicLength.toFixed(2) +
+            " km" +
+            " |   <b>Planar length</b>: " +
+            planarLength.toFixed(2) +
+            "  km";
+        }
+
+        function switchType(geom) {
+          switch (geom.type) {
+            case "polygon":
+              getArea(geom);
+              break;
+            case "polyline":
+              getLength(geom);
+              break;
+            default:
+              console.log("No value found");
+          }
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div></div>
+    <div id="measurements" class="esri-widget"></div>
+  </body>
+</html>

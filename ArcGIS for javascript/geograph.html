@@ -1,0 +1,133 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>Intro to popups | Sample | ArcGIS API for JavaScript 4.21</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #instruction {
+        z-index: 99;
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        padding: 5px;
+        margin-left: -175px;
+        height: 30px;
+        width: 355px;
+        background: rgba(25, 25, 25, 0.8);
+        color: white;
+      }
+      #measurements {
+        padding: 4px 8px;
+        font-size: 16px;
+        bottom: 15px;
+        left: 50%;
+        margin-right: -50%;
+        transform: translate(-50%, -50%);
+      }
+    </style>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.21/esri/themes/light/main.css"
+    />
+    <script src="https://js.arcgis.com/4.21/"></script>
+
+    <script>
+      require([
+        "esri/tasks/Locator",
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/GraphicsLayer",
+        "esri/widgets/Sketch",
+      ], (Locator, Map, MapView, Sketch, GraphicsLayer) => {
+        // Set up a locator task using the world geocoding service
+        const locatorTask = new Locator({
+          url: "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer",
+        });
+
+        // Create the Map
+        const map = new Map({
+          basemap: "arcgis-topographic",
+        });
+
+        // Create the MapView
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [76.9558, 11.0168],
+          zoom: 12,
+        });
+
+        /*******************************************************************
+         * This click event sets generic content on the popup not tied to
+         * a layer, graphic, or popupTemplate. The location of the point is
+         * used as input to a reverse geocode method and the resulting
+         * address is printed to the popup content.
+         *******************************************************************/
+        view.popup.autoOpenEnabled = false;
+        view.on("click", (event) => {
+          // Get the coordinates of the click on the view
+
+          const lat = Math.round(event.mapPoint.latitude * 1000) / 1000;
+          const lon = Math.round(event.mapPoint.longitude * 1000) / 1000;
+
+          view.popup.open({
+            // Set the popup's title to the coordinates of the location
+            title: "Reverse geocode: [" + lon + ", " + lat + "]",
+            location: event.mapPoint, // Set the location of the popup to the clicked location
+          });
+
+          const params = {
+            location: event.mapPoint,
+          };
+
+          view.when(() => {
+            const sketch = new Sketch({
+              layer: graphicsLayer,
+              view: view,
+
+              // graphic will be selected as soon as it is created
+              creationMode: "update",
+            });
+
+            view.ui.add(sketch, "top-right");
+          });
+
+          // Display the popup
+          // Execute a reverse geocode using the clicked location
+          locatorTask
+            .locationToAddress(params)
+            .then((response) => {
+              // If an address is successfully found, show it in the popup's content
+              view.popup.content = response.address;
+            })
+            .catch(() => {
+              // If the promise fails and no result is found, show a generic message
+              view.popup.content = "No address was found for this location";
+            });
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="instruction" class="esri-widget">
+      Click any location on the map to see its street address
+    </div>
+    <div id="measurements" class="esri-widget"></div>
+  </body>
+</html>
