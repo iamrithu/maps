@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="/node_modules/axios/dist/axios.min.js "></script>
+    <!-- <script src="https://unpkg.com/axios/dist/axios.min.js"></script> -->
+  </head>
+  <body>
+    <h1>hello</h1>
+    <button onclick="save()">click</button>
+    <p id="pic"></p>
+  </body>
+  <script>
+    // var x;
+    // var xhttp = new XMLHttpRequest();
+    // xhttp.onreadystatechange = function () {
+    //   if (this.readyState == 4 && this.status == 200) {
+    //     x = this.response;
+    //   }
+    // };
+    // xhttp.open("GET", " http://localhost:4000/location", true);
+    // xhttp.send();
+
+    // console.log(x.data);
+    // function save() {
+    //   fetch("http://localhost:4000/location")
+    //     .then((res) => res.json())
+    //     .then((data) => {
+    //       data.map((info, index) => {
+    //         return console.log(info.longitude);
+    //       });
+    //     })
+    //     .catch((err) => {
+    //       console.log(err);
+    //     });
+
+    // }
+
+    var value = [];
+    const save = () => {
+      const User = [];
+      axios.get("http://localhost:4000/location").then((response) => {
+        console.log(`GET users`, response.data);
+        response.data.map((info, index) => {
+          return User.push(info);
+        });
+
+        value.push(User);
+      });
+      value.map((info) => {
+        return info.longitute.map((lon) => {
+          return alert(lon);
+        });
+      });
+    };
+  </script>
+</html>

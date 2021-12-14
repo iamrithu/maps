@@ -1,0 +1,22 @@
+{
+  "name": "map",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://iamrithu: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@github.com/iamrithu/maps.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/iamrithu/maps/issues"
+  },
+  "homepage": "https://github.com/iamrithu/maps#readme",
+  "dependencies": {
+    "axios": "^0.24.0"
+  }
+}
